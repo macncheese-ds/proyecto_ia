@@ -1,0 +1,12 @@
+streamlit
+numpy
+scipy
+scikit-learn
+matplotlib
+networkx
+pandas
+pillow
+opencv-python
+sqlalchemy
+bcrypt
+plotly
