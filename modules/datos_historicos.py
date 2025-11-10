@@ -5,9 +5,9 @@ import numpy as np
 
 def show_datos_historicos():
     """Módulo de datos históricos y base de conocimiento"""
-    st.title("📚 Datos Históricos y Base de Conocimiento")
-    
-    tab1, tab2 = st.tabs(["📊 Histórico de Eventos", "🧠 Base de Conocimiento"])
+    st.title("Datos Históricos y Base de Conocimiento")
+
+    tab1, tab2 = st.tabs(["Histórico de Eventos", "Base de Conocimiento"])
     
     with tab1:
         mostrar_historico()
@@ -18,51 +18,62 @@ def show_datos_historicos():
 def mostrar_historico():
     """Muestra histórico de eventos"""
     st.subheader("Registro Histórico de Eventos")
-    
+
     # Filtros
     col1, col2, col3 = st.columns(3)
-    
+
     with col1:
         fecha_inicio = st.date_input("Desde", datetime.now() - timedelta(days=30))
     with col2:
         fecha_fin = st.date_input("Hasta", datetime.now())
     with col3:
-        tipo_evento = st.selectbox("Tipo de Evento", 
-                                   ["Todos", "Paro", "Falla", "Mantenimiento", "Normal"])
-    
-    # Generar datos históricos
-    datos = generar_historico()
-    
+        tipo_evento = st.selectbox("Tipo de Evento", ["Todos", "Paro", "Falla", "Mantenimiento", "Normal"])
+
+    # Usar paros reales si existen
+    stops_log = st.session_state.get('stops_log', [])
+    if stops_log:
+        datos = pd.DataFrame([
+            {
+                'Fecha': stop['timestamp'].strftime('%Y-%m-%d'),
+                'Hora': stop['timestamp'].strftime('%H:%M:%S'),
+                'Tipo': 'Paro',
+                'Duración (min)': '-',
+                'Mensaje': stop['mensaje']
+            }
+            for stop in stops_log
+        ])
+    else:
+        datos = generar_historico()
+
     # Aplicar filtros
     if tipo_evento != "Todos":
         datos = datos[datos['Tipo'] == tipo_evento]
-    
-    st.write(f"**Total de registros:** {len(datos)}")
-    st.dataframe(datos, use_container_width=True)
-    
+
+    st.write(f"Total de registros: {len(datos)}")
+    st.dataframe(datos, width='stretch')
+
     # Estadísticas
-    st.subheader("📊 Estadísticas")
+    st.subheader("Estadísticas")
     col1, col2, col3 = st.columns(3)
-    
+
     with col1:
         st.metric("Total Paros", len(datos[datos['Tipo'] == 'Paro']))
     with col2:
-        st.metric("Tiempo Total Paros (h)", 
-                 f"{datos[datos['Tipo'] == 'Paro']['Duración (min)'].sum() / 60:.1f}")
+        st.metric("Tiempo Total Paros (h)", f"{datos[datos['Tipo'] == 'Paro']['Duración (min)'].replace('-', 0).astype(float).sum() / 60:.1f}")
     with col3:
         st.metric("MTBF (h)", "12.5")  # Mean Time Between Failures
 
 def mostrar_base_conocimiento():
     """Muestra la base de conocimiento del sistema"""
-    st.subheader("🧠 Base de Conocimiento - Sistema Experto")
-    
+    st.subheader("Base de Conocimiento - Sistema Experto")
+
     st.write("""
-    El sistema utiliza una **representación lógica del conocimiento** para clasificar 
+    El sistema utiliza una representación lógica del conocimiento para clasificar 
     y diagnosticar problemas en la línea de producción.
     """)
-    
+
     # Hechos
-    st.markdown("### 📋 Hechos del Sistema")
+    st.markdown("### Hechos del Sistema")
     hechos = {
         "temperatura_alta": "Temperatura > 70°C",
         "vibración_anormal": "Vibración > 80",
@@ -70,13 +81,12 @@ def mostrar_base_conocimiento():
         "material_disponible": "Nivel material > 20%",
         "mantenimiento_reciente": "Días desde mantto < 7"
     }
-    
+
     for hecho, descripcion in hechos.items():
         st.code(f"{hecho}: {descripcion}", language='text')
-    
+
     # Reglas de inferencia
-    st.markdown("### 🔍 Reglas de Inferencia")
-    
+    st.markdown("### Reglas de Inferencia")
     reglas = [
         {
             "id": "R1",
@@ -111,7 +121,7 @@ def mostrar_base_conocimiento():
             st.info(f"**Acción:** {regla['accion']}")
     
     # Motor de inferencia simulado
-    st.markdown("### ⚙️ Motor de Inferencia en Acción")
+    st.markdown("### Motor de Inferencia en Acción")
     
     st.write("**Estado actual del sistema:**")
     
@@ -126,21 +136,21 @@ def mostrar_base_conocimiento():
         material_ok = st.checkbox("Material disponible")
         mant_reciente = st.checkbox("Mantenimiento reciente")
     
-    if st.button("🔍 Ejecutar Inferencia"):
+    if st.button("Ejecutar Inferencia"):
         conclusiones = []
         
         # Evaluar reglas
         if temp_alta and vib_anormal:
-            conclusiones.append(("🚨 CRÍTICO", reglas[0]))
+            conclusiones.append(("CRÍTICO", reglas[0]))
         
         if prod_baja and not material_ok:
-            conclusiones.append(("⚠️ ALERTA", reglas[1]))
+            conclusiones.append(("ALERTA", reglas[1]))
         
         if prod_baja and material_ok:
-            conclusiones.append(("⚠️ ALERTA", reglas[2]))
+            conclusiones.append(("ALERTA", reglas[2]))
         
         if not mant_reciente and temp_alta:
-            conclusiones.append(("ℹ️ INFO", reglas[3]))
+            conclusiones.append(("INFO", reglas[3]))
         
         if conclusiones:
             st.write("**Conclusiones del sistema:**")
@@ -153,10 +163,10 @@ def mostrar_base_conocimiento():
                     st.info(f"{nivel}: {regla['conclusion']}")
                 st.write(f"→ {regla['accion']}")
         else:
-            st.success("✅ Sistema operando normalmente")
+            st.success("Sistema operando normalmente")
     
     # Patrones aprendidos
-    st.markdown("### 📚 Patrones Aprendidos (Aprendizaje Inductivo)")
+    st.markdown("### Patrones Aprendidos (Aprendizaje Inductivo)")
     
     patrones = pd.DataFrame({
         'Patrón': [
@@ -175,7 +185,7 @@ def mostrar_base_conocimiento():
         'Confianza': ['85%', '92%', '78%', '88%']
     })
     
-    st.dataframe(patrones, use_container_width=True)
+    st.dataframe(patrones, width='stretch')
 
 def generar_historico():
     """Genera datos históricos de ejemplo"""

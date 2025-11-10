@@ -129,14 +129,14 @@ class AgenteMonitor:
 def show_monitor():
     """Modulo de monitoreo en tiempo real con simulacion de camara"""
     st.title("Monitor en Tiempo Real")
-    
+
     st.info("""
-    **Sistema de Agentes Inteligentes Implementado:**
+    Sistema de Agentes Inteligentes Implementado:
     - Agente Monitor: Detecta movimiento usando Vision por Computadora
     - Agente Analizador: Clasifica causas usando Reglas de Inferencia
     - Agente Predictor: Predice fallas basado en patrones historicos
-    
-    **Algoritmos de IA Activos:**
+
+    Algoritmos de IA Activos:
     - Deteccion de movimiento (Diferencia de frames)
     - Flujo optico (Farneback)
     - Segmentacion (Background Subtraction MOG2)
@@ -151,28 +151,30 @@ def show_monitor():
         st.session_state.produccion_manual = True
     if 'frame_count' not in st.session_state:
         st.session_state.frame_count = 0
+    if 'stops_log' not in st.session_state:
+        st.session_state.stops_log = []
     
     col1, col2 = st.columns([2, 1])
     
     with col2:
         st.subheader("Control de Simulacion")
-        
+
         # Controles manuales
         if st.button("Iniciar Simulacion" if not st.session_state.simulacion_activa else "Detener Simulacion"):
             st.session_state.simulacion_activa = not st.session_state.simulacion_activa
-        
+
         st.session_state.produccion_manual = st.checkbox(
-            "Produccion ACTIVA (desmarcar para simular PARO)", 
+            "Produccion ACTIVA (desmarcar para simular PARO)",
             value=st.session_state.produccion_manual
         )
-        
+
         velocidad = st.slider("Velocidad de produccion", 0, 100, 50)
-        
+
         st.markdown("---")
         st.subheader("Estado del Sistema")
         estado_placeholder = st.empty()
         metricas_placeholder = st.empty()
-        
+
         st.markdown("---")
         st.subheader("Algoritmos de IA Activos")
         st.text("Vision por Computadora:")
@@ -180,9 +182,17 @@ def show_monitor():
         st.text("- Flujo optico Farneback")
         st.text("- Background Subtraction MOG2")
         st.text("- Deteccion de contornos")
-        st.text("\nSistema Experto:")
+        st.text("Sistema Experto:")
         st.text("- Reglas de inferencia")
         st.text("- Motor de decision")
+
+        st.markdown("---")
+        st.subheader("Historial de Paros Detectados")
+        if st.session_state.stops_log:
+            for stop in reversed(st.session_state.stops_log):
+                st.error(f"[{stop['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}] {stop['mensaje']}")
+        else:
+            st.info("No se han detectado paros en esta sesión.")
     
     with col1:
         st.subheader("Vista de la Linea de Produccion")
@@ -192,28 +202,35 @@ def show_monitor():
         if st.session_state.simulacion_activa:
             agente = AgenteMonitor()
             frame_anterior = None
-            
+
             # Loop de simulacion
             while st.session_state.simulacion_activa and st.session_state.frame_count < 200:
                 # Generar frame simulado con control manual
                 frame = generar_frame_simulado(
-                    st.session_state.frame_count, 
+                    st.session_state.frame_count,
                     st.session_state.produccion_manual,
                     velocidad
                 )
-                
+
                 # AGENTE PERCIBE (usando algoritmos reales de IA)
                 movimiento, metricas = agente.percibir(frame_anterior, frame)
-                
+
                 # AGENTE DECIDE (usando sistema basado en reglas)
                 decision, razon = agente.decidir(movimiento, metricas)
-                
+
                 # AGENTE ACTUA
                 resultado = agente.actuar(decision, razon)
-                
+
+                # Guardar paros detectados en historial
+                if resultado["alerta"] and resultado["nivel"] == "CRITICO":
+                    st.session_state.stops_log.append({
+                        "timestamp": resultado["timestamp"],
+                        "mensaje": resultado["mensaje"]
+                    })
+
                 # Mostrar frame
                 video_placeholder.image(frame, channels="BGR", width="stretch")
-                
+
                 # Mostrar informacion del agente
                 with info_placeholder.container():
                     col_a, col_b, col_c = st.columns(3)
@@ -223,7 +240,7 @@ def show_monitor():
                         st.metric("Flujo Optico", f"{metricas.get('flujo_optico', 0):.3f}")
                     with col_c:
                         st.metric("Contornos", metricas.get('num_contornos', 0))
-                    
+
                     if resultado["alerta"]:
                         if resultado["nivel"] == "CRITICO":
                             st.error(f"[{resultado['nivel']}] {resultado['mensaje']}")
@@ -231,17 +248,17 @@ def show_monitor():
                             st.warning(f"[{resultado['nivel']}] {resultado['mensaje']}")
                     else:
                         st.success(f"[{resultado['nivel']}] {resultado['mensaje']}")
-                
+
                 # Actualizar metricas en columna derecha
                 with metricas_placeholder.container():
                     st.metric("Piezas/min", int(velocidad * 0.6) if st.session_state.produccion_manual else 0)
                     st.metric("Eficiencia", f"{velocidad}%" if st.session_state.produccion_manual else "0%")
                     st.metric("Estado", "ACTIVO" if st.session_state.produccion_manual else "DETENIDO")
-                
+
                 frame_anterior = frame.copy()
                 st.session_state.frame_count += 1
                 time.sleep(0.3)
-            
+
             st.session_state.simulacion_activa = False
             st.session_state.frame_count = 0
 

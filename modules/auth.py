@@ -26,7 +26,7 @@ def check_auth(username, password):
 
 def login_page():
     """Página de login"""
-    st.title("🔐 Sistema de Monitoreo de Producción")
+    st.title("Sistema de Monitoreo de Producción")
     st.subheader("Inicio de Sesión")
     
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -43,10 +43,10 @@ def login_page():
                     st.session_state.authenticated = True
                     st.session_state.user = username
                     st.session_state.role = role
-                    st.success("✅ Inicio de sesión exitoso")
+                    st.success("Inicio de sesión exitoso")
                     st.rerun()
                 else:
-                    st.error("❌ Usuario o contraseña incorrectos")
+                    st.error("Usuario o contraseña incorrectos")
         
         st.info("""
         **Usuarios de prueba:**

@@ -10,13 +10,13 @@ import matplotlib.pyplot as plt
 
 def show_reportes():
     """Módulo de reportes y análisis con IA"""
-    st.title("📈 Reportes y Análisis Inteligente")
-    
+    st.title("Reportes y Análisis Inteligente")
+
     tab1, tab2, tab3, tab4 = st.tabs([
-        "📊 Reportes Generales", 
-        "🌳 Árbol de Decisión", 
-        "🧠 Red Neuronal",
-        "📉 Análisis Predictivo"
+        "Reportes Generales",
+        "Árbol de Decisión",
+        "Red Neuronal",
+        "Análisis Predictivo"
     ])
     
     with tab1:
@@ -34,32 +34,45 @@ def show_reportes():
 def mostrar_reportes_generales():
     """Reportes generales del sistema"""
     st.subheader("Resumen de Operaciones")
-    
+
     # Selector de rango de fechas
     col1, col2 = st.columns(2)
     with col1:
         fecha_inicio = st.date_input("Fecha Inicio", datetime.now() - timedelta(days=7))
     with col2:
         fecha_fin = st.date_input("Fecha Fin", datetime.now())
-    
-    # Generar datos de ejemplo
-    datos = generar_datos_reportes()
-    
+
+    # Usar paros reales si existen
+    stops_log = st.session_state.get('stops_log', [])
+    if stops_log:
+        datos = pd.DataFrame([
+            {
+                'Fecha': stop['timestamp'].strftime('%Y-%m-%d'),
+                'Hora': stop['timestamp'].strftime('%H:%M:%S'),
+                'Causa': 'Paro detectado',
+                'Duración (min)': '-',
+                'Mensaje': stop['mensaje']
+            }
+            for stop in stops_log
+        ])
+    else:
+        datos = generar_datos_reportes()
+
     # Tabla de resumen
-    st.subheader("📋 Tiempos Muertos Registrados")
-    st.dataframe(datos, use_container_width=True)
-    
+    st.subheader("Tiempos Muertos Registrados")
+    st.dataframe(datos, width='stretch')
+
     # Gráfico de barras
-    st.subheader("📊 Tiempos Muertos por Causa")
-    fig = px.bar(datos, x='Causa', y='Duración (min)', 
+    st.subheader("Tiempos Muertos por Causa")
+    fig = px.bar(datos, x='Causa', y='Duración (min)',
                  title='Distribución de Tiempos Muertos',
                  color='Causa')
     st.plotly_chart(fig, use_container_width=True)
-    
+
     # Botón de descarga
     csv = datos.to_csv(index=False).encode('utf-8')
     st.download_button(
-        label="📥 Descargar Reporte CSV",
+        label="Descargar Reporte CSV",
         data=csv,
         file_name=f'reporte_{fecha_inicio}_{fecha_fin}.csv',
         mime='text/csv',
@@ -67,7 +80,7 @@ def mostrar_reportes_generales():
 
 def mostrar_arbol_decision():
     """Sistema de clasificación con árbol de decisión"""
-    st.subheader("🌳 Clasificación de Causas con Árbol de Decisión")
+    st.subheader("Clasificación de Causas con Árbol de Decisión")
     
     st.write("""
     **Objetivo:** Clasificar automáticamente la causa de un tiempo muerto basado en:
@@ -90,7 +103,7 @@ def mostrar_arbol_decision():
     st.pyplot(fig)
     
     # Predicción interactiva
-    st.subheader("🔮 Predicción de Causa")
+    st.subheader("Predicción de Causa")
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -114,7 +127,7 @@ def mostrar_arbol_decision():
 
 def mostrar_red_neuronal():
     """Sistema de predicción con red neuronal"""
-    st.subheader("🧠 Predicción de Fallas con Red Neuronal")
+    st.subheader("Predicción de Fallas con Red Neuronal")
     
     st.write("""
     **Objetivo:** Predecir si habrá una falla en las próximas horas basado en:
@@ -129,7 +142,7 @@ def mostrar_red_neuronal():
     mlp = MLPClassifier(hidden_layer_sizes=(10, 5), max_iter=1000, random_state=42)
     mlp.fit(X_train, y_train)
     
-    st.success(f"✅ Modelo entrenado - Precisión: {mlp.score(X_train, y_train)*100:.2f}%")
+    st.success(f"Modelo entrenado - Precisión: {mlp.score(X_train, y_train)*100:.2f}%")
     
     # Visualizar arquitectura
     col1, col2 = st.columns([1, 2])
@@ -155,14 +168,14 @@ def mostrar_red_neuronal():
         prob = mlp.predict_proba(entrada)[0]
         
         if pred == 1:
-            st.error(f"⚠️ **RIESGO DE FALLA** ({prob[1]*100:.1f}% probabilidad)")
+            st.error(f"RIESGO DE FALLA ({prob[1]*100:.1f}% probabilidad)")
             st.warning("Recomendación: Mantenimiento preventivo inmediato")
         else:
-            st.success(f"✅ **OPERACIÓN NORMAL** ({prob[0]*100:.1f}% probabilidad)")
+            st.success(f"OPERACIÓN NORMAL ({prob[0]*100:.1f}% probabilidad)")
 
 def mostrar_analisis_predictivo():
     """Análisis predictivo y búsqueda de patrones"""
-    st.subheader("📉 Análisis Predictivo y Búsqueda de Patrones")
+    st.subheader("Análisis Predictivo y Búsqueda de Patrones")
     
     st.write("""
     **Algoritmos de Búsqueda aplicados:**
@@ -202,7 +215,7 @@ def mostrar_analisis_predictivo():
     st.plotly_chart(fig, use_container_width=True)
     
     # Sistema basado en reglas
-    st.subheader("📜 Sistema Basado en Reglas")
+    st.subheader("Sistema Basado en Reglas")
     
     reglas = [
         "SI producción < 40 piezas/hora ENTONCES alerta_baja_producción",
@@ -214,7 +227,7 @@ def mostrar_analisis_predictivo():
     for regla in reglas:
         st.code(regla, language='text')
     
-    st.info("💡 Estas reglas son evaluadas constantemente por el sistema de agentes inteligentes")
+    st.info("Estas reglas son evaluadas constantemente por el sistema de agentes inteligentes")
 
 def generar_datos_reportes():
     """Genera datos de ejemplo para reportes"""
@@ -265,7 +278,7 @@ def generar_dataset_prediccion():
 def generar_serie_temporal():
     """Genera serie temporal con anomalías"""
     n_points = 100
-    timestamps = pd.date_range(start=datetime.now() - timedelta(hours=n_points), periods=n_points, freq='H')
+    timestamps = pd.date_range(start=datetime.now() - timedelta(hours=n_points), periods=n_points, freq='h')
     
     # Generar patrón base
     produccion = 50 + 10 * np.sin(np.linspace(0, 4*np.pi, n_points)) + np.random.randn(n_points) * 3
